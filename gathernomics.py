@@ -131,31 +131,33 @@ class StatsCanTableDownloader(object):
 
     def downloadZipFile(self, ctx) -> str:
         url = ctx.url
-        zip_file = path.join(
+        zip_path = path.join(
             self.compression_dir,
             "{}-{}.zip".format(ctx.name, ctx.iso_datetime))
-        if path.exists(zip_file):
-            die("Compression file already exists: %s", zip_file)
+        if path.exists(zip_path):
+            die("Compression file already exists: %s", zip_path)
+        # Download
         logger.debug(
-            "Downloading StatsCan table from %s to file %s", url, zip_file)
-        requester = urllib.request.URLopener()
-        _, response = requester.retrieve(url, zip_file)
+            "Downloading StatsCan table from %s", url)
+        response = urllib.request.urlopen(url)
         logger.debug("> Done downloading")
+        # Verify output
         context_length = tryint(
-            coalese(response.get("Content-Length"), "0").strip())
-        content_type = coalese(response.get("Content-Type"), "").strip()
+            coalese(response.getheader("Content-Length"), "0").strip())
+        content_type = coalese(response.getheader("Content-Type"), "").strip()
         if content_type != "application/zip" or context_length == 0:
             logger.warning(
                 "> Failed to download table %s zip from %s ", ctx.name, url)
-            if path.isfile(zip_file):
-                logger.debug("> Removing empty file")
-                os.remove(zip_file)
             return None
-        else:
-            logger.debug("> Zip size: %d", context_length)
-        ctx.zip_filepath = zip_file
-        self.pushFile(zip_file)
-        return zip_file
+        logger.debug("> Zip size: %d", context_length)
+        # Save to data to zip file
+        logger.debug("> Saving response to %s", zip_path)
+        zip_file = open(zip_path, "wb")
+        zip_file.write(response.read())
+        logger.debug("> Done saving")
+        ctx.zip_filepath = zip_path
+        self.pushFile(zip_path)
+        return zip_path
 
     def extractZipFile(self, ctx) -> List[Tuple[str, str]]:
         zippath = ctx.zip_filepath
