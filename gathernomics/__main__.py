@@ -6,8 +6,10 @@ See LICENSE for information
 """
 
 import argparse
+import csv
 import getpass
 import logging
+from pprint import pprint
 import sys
 from typing import List
 
@@ -15,7 +17,18 @@ from gathernomics.config import GathernomicsConfig
 from gathernomics.defaults import DEFAULT_DATEBASE_NAME
 from gathernomics.descriptor import TableDescriptor
 from gathernomics.downloader import StatsCanTableDownloader
-from gathernomics.modelbase import ModelBase
+from gathernomics.models.base import ModelBase
+from gathernomics.filters import (
+    ConsumptionFilter,
+    ConsumptionTaxFilter,
+    ConsumptionEmploymentRateFilter,
+    ConsumptionWagesFilter,
+    ConsumptionDisposableIncomeFilter,
+    ConsumptionCreditFilter,
+    GDPFilter,
+    GovernmentExpenditureFilter,
+    CaptialFilter, ImportExportFilter)
+from gathernomics.models.factor import TemporalFrequency
 
 # Initialize logger.
 logger = logging.getLogger(name=__name__)
@@ -90,6 +103,13 @@ def parse_args(args: List[str]) -> argparse.Namespace:
         default=None,
         dest="config_path")
 
+    parser.add_argument(
+        "--output",
+        help="Location of output csv file",
+        type=str,
+        default=None,
+        dest="output_path")
+
     # Database Related
     parser.add_argument(
         "-d", "--db-name",
@@ -129,6 +149,40 @@ def parse_args(args: List[str]) -> argparse.Namespace:
     return parser.parse_args(args=args)
 
 
+def prepare_filter(table, ctx):
+    table_filter_cls = {
+        "gdp": GDPFilter,
+        "consumption": ConsumptionFilter,
+        "consumption_tax": ConsumptionTaxFilter,
+        "consumption_employment_rate": ConsumptionEmploymentRateFilter,
+        "consumption_wages": ConsumptionWagesFilter,
+        "consumption_disposable_income": ConsumptionDisposableIncomeFilter,
+        "consumption_credit": ConsumptionCreditFilter,
+        "govexp": GovernmentExpenditureFilter,
+        "captial": CaptialFilter,
+        "import_export": ImportExportFilter
+    }.get(table.data_filter)
+    if table_filter_cls is None:
+        return None
+    table_filter = table_filter_cls(
+        csv_path=ctx.data_csv_path,
+        category=table.category,
+        indicator=table.indicator,
+        frequency=table.frequency)
+    return table_filter
+
+
+def dump_rows_to_csv(outpath, rows):
+    keys = list(rows[0].keys())
+    logger.debug("Dumping output to csv file %s", outpath)
+    with open(outpath, "w") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=keys)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+        logger.debug("> Done")
+
+
 def main(*argv):
     """Gathernomics Main Function."""
     options = parse_args(argv)
@@ -137,11 +191,31 @@ def main(*argv):
     config = GathernomicsConfig(options.config_path)
     downloader = StatsCanTableDownloader()
     tables_data = config.GetTablesData()
+    rows = []
     for table_data in tables_data:
         table = TableDescriptor.CreateFromDict(table_data)
         if table is None:
             continue
-        downloader.DownloadTable(table)
+        if not table.enabled:
+            logger.debug("Skipping disabled table %s", table.name)
+            continue
+        ctx = downloader.DownloadTable(table)
+        if ctx is None:
+            logger.debug("Failed to load, skipping")
+            continue
+        table_filter = prepare_filter(table, ctx)
+        if table_filter is None:
+            logger.warning(
+                "Cannot filter table %s, no filter for %s",
+                table.name, table.data_filter)
+            continue
+        table_rows = list(table_filter)
+        rows.extend(table_rows)
+    logger.debug("Total rows %d", len(rows))
+
+    if options.output_path is not None:
+        dump_rows_to_csv(options.output_path, rows)
+
     return 0
 
 
