@@ -3,7 +3,9 @@
 import argparse
 from datetime import datetime as DateTime
 from datetime import date as Date
+from enum import Enum
 import logging
+import json
 import os
 import os.path as path
 import sys
@@ -18,6 +20,13 @@ logger = logging.getLogger(name=__file__)
 
 DEFAULT_TEMP_DIR = path.join(tempfile.gettempdir(), "gathernomics")
 DEFAULT_COMP_DIR = path.join(DEFAULT_TEMP_DIR, "zips")
+
+DEFAULT_CONFIG_PATH = path.join(os.getcwd(), "config.json")
+DEFAULT_TABLE_TRACK_PATH = path.join(DEFAULT_TEMP_DIR, "table_tracker.json")
+
+#
+# ---- ---- ---- Utilities ---- ---- ----
+#
 
 
 def die(message, *args, **kwargs):
@@ -51,6 +60,11 @@ def iso_datetime() -> str:
     return dt.strftime("%Y-%m-%dT%H:%M:%S")
 
 
+def name_to_filename(name: str) -> str:
+    alnum_name = "".join([c for c in name.strip() if c.isalnum() or c == " "])
+    return alnum_name.replace(" ", "_")
+
+
 def init_logging(options: argparse.Namespace):
     """Initialize Program Logger."""
     logging_config = {
@@ -62,15 +76,96 @@ def init_logging(options: argparse.Namespace):
     logging.basicConfig(**logging_config)
 
 
+class DataSource(Enum):
+    UNKNOWN = 0
+    STATSCAN = 1
+
+#
+# ---- ---- ---- Configuration File ---- ---- ----
+#
+
+
+class GathernomicsConfig(object):
+    def __init__(self, config_path: str = None):
+        self._config_path = coalese(config_path, DEFAULT_CONFIG_PATH)
+        data = {}
+        if path.isfile(self.config_path):
+            logger.debug("Loading config file: %s", self.config_path)
+            with open(self.config_path) as f:
+                try:
+                    data = json.load(f)
+                except json.decoder.JSONDecodeError:
+                    logger.warning(
+                        "Config file %s is not a json file", self.config_path)
+        else:
+            logger.debug("No config file found at %s", self.config_path)
+        self._data = data
+
+    @property
+    def config_path(self) -> str:
+        return self._config_path
+
+    @property
+    def data(self) -> dict:
+        return self._data
+
+    def GetTables(self) -> list:
+        logger.debug("Loading tables from config")
+        if "tables" not in self.data:
+            logger.debug("> No data")
+            return []
+        tables_data = self.data["tables"]
+        if not isinstance(tables_data, list):
+            logger.warning("`tables' section of config %s is not a list")
+            return []
+        tables = []
+        for idx, table_data in enumerate(tables_data):
+            name = table_data.get("name")
+            if not isinstance(name, str):
+                logger.warning("Table #%d does not have a name", idx)
+                continue
+            url = table_data.get("url")
+            if not isinstance(url, str):
+                logger.warning("Table #%d does not have a url", idx)
+            table = TableDescriptor(name=name, url=url)
+            data_filter = table_data.get("data_filter")
+            if isinstance(data_filter, str):
+                table.data_filter = data_filter
+            meta_filter = table_data.get("meta_filter")
+            if isinstance(meta_filter, str):
+                table.meta_filter = meta_filter
+            source = table_data.get("source")
+            if not isinstance(source, str):
+                table.source = DataSource.STATSCAN
+            else:
+                if source == "statscan":
+                    table.source = DataSource.STATSCAN
+                else:
+                    logger.debug("Unknown data source: %s", source)
+                    table.source = DataSource.UNKNOWN
+
+            logger.debug("> Loaded table %s", name)
+            tables.append(table)
+        return tables
+
+
+#
+# ---- ---- ---- Table Manager ---- ---- ----
+#
+
+
 class TableDescriptor(object):
     """Table Descriptor.
 
     Contains the meta data for a tables found on StatsCan.
     """
-    def __init__(self, name: str, url: str, last_update: Date):
+    def __init__(self, name: str, url: str):
         self._name = name
         self._url = url
-        self._last_update = last_update
+        self.last_update = None
+        self.data_filter = None
+        self.meta_filter = None
+        self.source = None
 
     @property
     def name(self) -> str:
@@ -80,10 +175,10 @@ class TableDescriptor(object):
     def url(self) -> str:
         return self._url
 
-    @property
-    def last_update(self) -> Date:
-        return self._last_update
 
+#
+# ---- ---- ---- Downloaders ---- ---- ----
+#
 
 class StatsCanTableDownloader(object):
     class Context(object):
@@ -133,7 +228,7 @@ class StatsCanTableDownloader(object):
         url = ctx.url
         zip_path = path.join(
             self.compression_dir,
-            "{}-{}.zip".format(ctx.name, ctx.iso_datetime))
+            "{}-{}.zip".format(name_to_filename(ctx.name), ctx.iso_datetime))
         if path.exists(zip_path):
             die("Compression file already exists: %s", zip_path)
         # Download
@@ -162,7 +257,8 @@ class StatsCanTableDownloader(object):
     def extractZipFile(self, ctx) -> List[Tuple[str, str]]:
         zippath = ctx.zip_filepath
         out_dir = path.join(
-            self.compression_dir, "{}-{}.d".format(ctx.name, ctx.iso_datetime))
+            self.compression_dir, "{}-{}.d".format(
+                name_to_filename(ctx.name), ctx.iso_datetime))
         if path.exists(out_dir):
             die("Extraction directory already exists: %s", out_dir)
         if not path.isfile(zippath):
@@ -208,6 +304,11 @@ class StatsCanTableDownloader(object):
         return data_path, meta_path
 
     def DownloadTable(self, table_descriptor):
+        if table_descriptor.source != DataSource.STATSCAN:
+            logger.debug(
+                "Cannot download %s using StatsCanTableDownloader",
+                table_descriptor.name)
+            return None
         ctx = self.Context(table_descriptor.name, table_descriptor.url)
         zip_file = self.downloadZipFile(ctx)
         if zip_file is None:
@@ -220,12 +321,11 @@ class StatsCanTableDownloader(object):
 
 def main(*argv):
     init_logging(None)
-    logger.info("Hello, World!")
-    table = TableDescriptor(
-        "GDP", "https://www150.statcan.gc.ca/n1/tbl/csv/36100434-eng.zip",
-        None)
+    config = GathernomicsConfig()
     downloader = StatsCanTableDownloader()
-    ctx = downloader.DownloadTable(table)
+    tables = config.GetTables()
+    for table in tables:
+        downloader.DownloadTable(table)
     return 0
 
 
