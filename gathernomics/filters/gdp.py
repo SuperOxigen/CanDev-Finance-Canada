@@ -8,7 +8,7 @@ from datetime import date as Date
 from datetime import datetime as DateTime
 
 from gathernomics.utils import tryint, scalar_multiplier
-from gathernomics.filterbase import FilterBase
+from gathernomics.filters.base import FilterBase
 from gathernomics.models.factor import TemporalFrequency
 
 NAICS_KEY = "North American Industry Classification System (NAICS)"

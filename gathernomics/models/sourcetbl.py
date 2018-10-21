@@ -8,7 +8,7 @@ from datetime import date as Date
 from enum import Enum
 import logging
 
-from gathernomics.modelbase import ModelBase
+from gathernomics.models.base import ModelBase
 
 logger = logging.getLogger("gathernomics.models.sourcetbl")
 
