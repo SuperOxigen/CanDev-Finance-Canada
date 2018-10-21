@@ -19,6 +19,25 @@ Data gathering was broken into several components:
 The code for data gathering can be found under [gathernomics](gathernomics/)
 (*gather* -ing eco- *nomics* data).
 
+### Output File Format
+
+The current output format of data gatherer is a CSV file with the following
+attributes.
+
+| Field     | Type     | Description                            |
+| --------- | -------- | -------------------------------------- |
+| value     | Integer  | CAD value of datum                     |
+| indicator | String   | Economic indicator of Value            |
+| category  | String   | Broader category of economic indicator |
+| frequency | String   | Frequency which new data is recorded   |
+| date      | ISO Date | Date of the datum (`YYYY-mm-DD`)       |
+
+### Config File
+
+There is a sample config file provided in the project as
+[.config.json](.config.json).  The files provide an ability to add
+new tables and indicate the source of the data.
+
 ### How to Run
 Download Python requirements.
 
