@@ -1,8 +1,13 @@
-"""Gathernomics - Gathers Economic Data from StatsCan."""
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+"""Gathernomics - Gathers Economic Data from StatsCan.
+
+Copyright (c) 2018 Alex Dale
+See LICENSE for information
+"""
 
 import argparse
 from datetime import datetime as DateTime
-from datetime import date as Date
 from enum import Enum
 import logging
 import json
@@ -16,21 +21,27 @@ import zipfile
 
 from typing import List, Tuple
 
+# Initialize logger.
 logger = logging.getLogger(name=__file__)
 
+# Sets the default temp directory to be within the system's temp directory.
 DEFAULT_TEMP_DIR = path.join(tempfile.gettempdir(), "gathernomics")
+# Default location for zip files.
 DEFAULT_COMP_DIR = path.join(DEFAULT_TEMP_DIR, "zips")
-
+# Standard location for configuration data should be in the user's current
+# working directory.
 DEFAULT_CONFIG_PATH = path.join(os.getcwd(), "config.json")
-DEFAULT_TABLE_TRACK_PATH = path.join(DEFAULT_TEMP_DIR, "table_tracker.json")
 
 
 class DataSource(Enum):
+    """Data Source."""
+
     UNKNOWN = 0
     STATSCAN = 1
 
     @classmethod
     def FromString(cls, source: str, default=None):
+        """Data Source from String."""
         return {
             "unknown": cls.UNKNOWN,
             "statscan": cls.STATSCAN
@@ -43,11 +54,17 @@ class DataSource(Enum):
 #
 
 def die(message, *args, **kwargs):
+    """Die - Log Fatally and Exit."""
     logger.fatal(message, *args, **kwargs)
     sys.exit(1)
 
 
 def coalese(*args):
+    """Coalese.
+
+    Uses the first non-None argument, or the last argument if all are
+    None.
+    """
     for arg in args:
         if arg is not None:
             return arg
@@ -55,6 +72,11 @@ def coalese(*args):
 
 
 def tryint(value: str) -> int:
+    """Try Parse Int.
+
+    Attempts to parse a string integer into an integer, returns 0 if
+    string is not a number.
+    """
     if isinstance(value, int):
         return value
     if isinstance(value, str):
@@ -64,16 +86,19 @@ def tryint(value: str) -> int:
 
 
 def packeddatestring() -> str:
+    """Packed Date String."""
     dt = DateTime.fromtimestamp(time.time())
     return dt.strftime('%Y%m%d')
 
 
 def iso_datetime() -> str:
+    """ISO Time String."""
     dt = DateTime.fromtimestamp(time.time())
     return dt.strftime("%Y-%m-%dT%H:%M:%S")
 
 
 def name_to_filename(name: str) -> str:
+    """Name to Filename."""
     alnum_name = "".join([c for c in name.strip() if c.isalnum() or c == " "])
     return alnum_name.replace(" ", "_")
 
@@ -91,7 +116,6 @@ def init_logging(options: argparse.Namespace):
 #
 # ---- ---- ---- Configuration File ---- ---- ----
 #
-
 
 class GathernomicsConfig(object):
     def __init__(self, config_path: str = None):
