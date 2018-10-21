@@ -93,9 +93,9 @@
             "name": "Capital",
             "url": "https://www150.statcan.gc.ca/n1/tbl/csv/36100222-eng.zip",
             "source": "statscan",
-            "data_filter": "captial",
-            "category": "captial",
-            "indicator": "captial",
+            "data_filter": "capital",
+            "category": "capital",
+            "indicator": "capital",
             "frequency": "annually",
             "enabled": true
         },
