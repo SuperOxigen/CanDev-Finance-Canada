@@ -20,6 +20,7 @@ BEGIN;
  *      STATSCAN - information comes from Statistics Canada.
  */
 CREATE TYPE SourceTblType AS ENUM (
+    'UNKNOWN',
     'STATSCAN'
 );
 
@@ -44,7 +45,7 @@ CREATE TABLE StatsCanTbl(
 );
 
 /*
- *  Finacial Tracking
+ *  Financial Tracking
  */
 
 CREATE TYPE TemporalFrequency AS ENUM (
@@ -54,12 +55,12 @@ CREATE TYPE TemporalFrequency AS ENUM (
 );
 
 /*
- *  === Finacial Factor ===
+ *  === Financial Factor ===
  */
-CREATE TABLE FinacialFactor(
+CREATE TABLE FinancialFactor(
     FactorID        SERIAL              PRIMARY KEY,
     FiscalValue     BIGINT              NOT NULL,
-    ReportingFreq   TemporalFrequency   NOT NULL,
+    Frequency       TemporalFrequency   NOT NULL,
     Indicator       VARCHAR(255)        NOT NULL,
     MainCategory    VARCHAR(255)        NOT NULL,
     Date            DATE                NOT NULL,

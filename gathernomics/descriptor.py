@@ -25,6 +25,13 @@ class DataSource(Enum):
         }.get(source.lower(), cls.UNKNOWN
               if default is None else default)
 
+    def __str__(self):
+        """Data Source to String."""
+        return {
+            DataSource.UNKNOWN: "UNKNOWN",
+            DataSource.STATSCAN: "STATSCAN"
+        }.get(self, "UNKNOWN")
+
 
 class TableDescriptor(object):
     """Table Descriptor.
