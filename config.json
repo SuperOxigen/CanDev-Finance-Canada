@@ -1,0 +1,113 @@
+{
+    "tables": [
+        {
+            "name": "GDP",
+            "url": "https://www150.statcan.gc.ca/n1/tbl/csv/36100434-eng.zip",
+            "source": "statscan",
+            "data_filter": "gdp",
+            "category": "gdp",
+            "indicator": "gdp",
+            "frequency": "monthly",
+            "enabled": true
+        },
+        {
+            "name": "Consumption",
+            "url": "https://www150.statcan.gc.ca/n1/tbl/csv/36100222-eng.zip",
+            "source": "statscan",
+            "data_filter": "consumption",
+            "category": "consumption",
+            "indicator": "consumption",
+            "frequency": "annually",
+            "enabled": true
+        },
+        {
+            "name": "Consumption Taxes",
+            "url": "https://www150.statcan.gc.ca/n1/tbl/csv/11100034-eng.zip",
+            "source": "statscan",
+            "data_filter": "consumption_tax",
+            "category": "consumption",
+            "indicator": "taxes",
+            "frequency": "annually",
+            "enabled": true
+        },
+        {
+            "name": "Consumption Employment Rate",
+            "url": "https://www150.statcan.gc.ca/n1/tbl/csv/14100287-eng.zip",
+            "source": "statscan",
+            "data_filter": "consumption_employment_rate",
+            "category": "consumption",
+            "indicator": "employment rate",
+            "frequency": "monthly",
+            "enabled": true
+        },
+        {
+            "name": "Consumption Exchange Rate",
+            "url": "https://www150.statcan.gc.ca/n1/tbl/csv/33100036-eng.zip",
+            "source": "statscan",
+            "data_filter": "consumption_exchange_rate",
+            "category": "consumption",
+            "indicator": "exchange rate",
+            "frequency": "daily"
+        },
+        {
+            "name": "Consumption Wages",
+            "url": "https://www150.statcan.gc.ca/n1/tbl/csv/14100223-eng.zip",
+            "source": "statscan",
+            "data_filter": "consumption_wages",
+            "category": "consumption",
+            "indicator": "wages",
+            "frequency": "monthly",
+            "enabled": true
+        },
+        {
+            "name": "Consumption Disposable Income",
+            "url": "https://www150.statcan.gc.ca/n1/tbl/csv/36100587-eng.zip",
+            "source": "statscan",
+            "data_filter": "consumption_disposable_income",
+            "category": "consumption",
+            "indicator": "disposable income",
+            "frequency": "annually",
+            "enabled": true
+        },
+        {
+            "name": "Consumption Credit",
+            "url": "https://www150.statcan.gc.ca/n1/tbl/csv/10100118-eng.zip",
+            "source": "statscan",
+            "data_filter": "consumption_credit",
+            "category": "consumption",
+            "indicator": "credit",
+            "frequency": "monthly",
+            "enabled": true
+        },
+        {
+            "name": "Government Expenditures",
+            "url": "https://www150.statcan.gc.ca/n1/tbl/csv/10100015-eng.zip",
+            "source": "statscan",
+            "data_filter": "govexp",
+            "category": "government expenditures",
+            "indicator": "government expenditures",
+            "frequency": "quarterly",
+            "enabled": true
+        },
+        {
+            "name": "Capital",
+            "url": "https://www150.statcan.gc.ca/n1/tbl/csv/36100222-eng.zip",
+            "source": "statscan",
+            "data_filter": "captial",
+            "category": "captial",
+            "indicator": "captial",
+            "frequency": "annually",
+            "enabled": true
+        },
+        {
+            "name": "Import Export",
+            "url": "https://www150.statcan.gc.ca/n1/tbl/csv/12100011-eng.zip",
+            "source": "statscan",
+            "data_filter": "import_export",
+            "category": "*",
+            "indicator": "*",
+            "frequency": "monthly",
+            "enabled": true
+        }
+    ]
+}
