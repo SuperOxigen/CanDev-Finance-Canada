@@ -7,30 +7,10 @@ See LICENSE for information
 from enum import Enum
 import logging
 
+from gathernomics.models.sourcetbl import SourceTableType
+from gathernomics.models.factor import TemporalFrequency
+
 logger = logging.getLogger(name=__name__)
-
-
-class DataSource(Enum):
-    """Data Source."""
-
-    UNKNOWN = 0
-    STATSCAN = 1
-
-    @classmethod
-    def FromString(cls, source: str, default=None):
-        """Data Source from String."""
-        return {
-            "unknown": cls.UNKNOWN,
-            "statscan": cls.STATSCAN
-        }.get(source.lower(), cls.UNKNOWN
-              if default is None else default)
-
-    def __str__(self):
-        """Data Source to String."""
-        return {
-            DataSource.UNKNOWN: "UNKNOWN",
-            DataSource.STATSCAN: "STATSCAN"
-        }.get(self, "UNKNOWN")
 
 
 class TableDescriptor(object):
@@ -38,15 +18,17 @@ class TableDescriptor(object):
 
     Contains the meta data for a tables found on StatsCan.
     """
-    def __init__(self, name: str, url: str, category: str, indicator: str):
+    def __init__(self, name: str, url: str, category: str,
+                 indicator: str, frequency: TemporalFrequency):
         self._name = name
         self._url = url
         self.category = category
         self.indicator = indicator
+        self.frequency = frequency
         self.last_update = None
         self.data_filter = None
         self.meta_filter = None
-        self._source = DataSource.UNKNOWN
+        self._source = SourceTableType.UNKNOWN
 
     @property
     def name(self) -> str:
@@ -57,12 +39,12 @@ class TableDescriptor(object):
         return self._url
 
     @property
-    def source(self) -> DataSource:
+    def source(self) -> SourceTableType:
         return self._source
 
     @source.setter
-    def source(self, value: DataSource):
-        if not isinstance(value, DataSource):
+    def source(self, value: SourceTableType):
+        if not isinstance(value, SourceTableType):
             return
         self._source = value
 
@@ -85,11 +67,16 @@ class TableDescriptor(object):
         if not isinstance(indicator, str):
             logger.warning("Table %s does not have an indicator", name)
             return None
+        frequency = table_data.get("frequency")
+        if not isinstance(frequency, str):
+            logger.warning("Table %s does not have a frequency", name)
+            return None
         table = TableDescriptor(
             name=name,
             url=url,
             category=category,
-            indicator=indicator)
+            indicator=indicator,
+            frequency=TemporalFrequency.FromString(frequency))
         # Optional fields.
         data_filter = table_data.get("data_filter")
         if isinstance(data_filter, str):
@@ -99,11 +86,11 @@ class TableDescriptor(object):
             table.meta_filter = meta_filter
         source = table_data.get("source")
         if not isinstance(source, str):
-            table.source = DataSource.STATSCAN
+            table.source = SourceTableType.STATSCAN
         else:
-            table.source = DataSource.FromString(
-                source, DataSource.STATSCAN)
-            if table.source is DataSource.UNKNOWN:
+            table.source = SourceTableType.FromString(
+                source, SourceTableType.STATSCAN)
+            if table.source is SourceTableType.UNKNOWN:
                 logger.debug("Unknown data source: %s", source)
         logger.debug("> Loaded table %s", name)
         return table

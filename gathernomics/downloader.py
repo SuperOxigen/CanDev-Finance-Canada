@@ -13,7 +13,7 @@ import urllib.request
 import zipfile
 
 from gathernomics.defaults import DEFAULT_COMP_DIR
-from gathernomics.descriptor import DataSource
+from gathernomics.models.sourcetbl import SourceTableType
 from gathernomics.utils import iso_datetime, coalese, name_to_filename, tryint
 
 logger = logging.getLogger(name=__name__)
@@ -149,7 +149,7 @@ class StatsCanTableDownloader(object):
         return data_path, meta_path
 
     def DownloadTable(self, table_descriptor):
-        if table_descriptor.source != DataSource.STATSCAN:
+        if table_descriptor.source != SourceTableType.STATSCAN:
             logger.debug(
                 "Cannot download %s using StatsCanTableDownloader",
                 table_descriptor.name)

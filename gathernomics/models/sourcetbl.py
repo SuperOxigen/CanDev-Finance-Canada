@@ -4,13 +4,34 @@ Copyright (c) 2018 Alex Dale
 See LICENSE for information.
 """
 
-import logging
 from datetime import date as Date
+from enum import Enum
+import logging
 
-from gathernomics.descriptor import DataSource
 from gathernomics.modelbase import ModelBase
 
 logger = logging.getLogger("gathernomics.models.sourcetbl")
+
+
+class SourceTableType(Enum):
+    UNKNOWN = 0
+    STATSCAN = 1
+
+    @classmethod
+    def FromString(cls, source: str, default=None):
+        """Data Source from String."""
+        return {
+            "unknown": cls.UNKNOWN,
+            "statscan": cls.STATSCAN
+        }.get(source.lower(), cls.UNKNOWN
+              if default is None else default)
+
+    def __str__(self):
+        """Data Source to String."""
+        return {
+            SourceTableType.UNKNOWN: "UNKNOWN",
+            SourceTableType.STATSCAN: "STATSCAN"
+        }.get(self, "UNKNOWN")
 
 
 class SourceTable(ModelBase):
@@ -19,7 +40,7 @@ class SourceTable(ModelBase):
     @classmethod
     def _CreateNew(
             cls,
-            table_type: DataSource,
+            table_type: SourceTableType,
             last_update: Date = None):
         """Create New Source Table."""
         return cls(
@@ -71,7 +92,7 @@ class SourceTable(ModelBase):
         """Create Source Table from Row Result."""
         table = cls(
             table_id=row["TableId"],
-            table_type=DataSource.FromString(row["Type"]),
+            table_type=SourceTableType.FromString(row["Type"]),
             last_update=row["LastUpdate"],
             from_db=True)
         return table
@@ -126,7 +147,7 @@ class SourceTable(ModelBase):
     def __init__(
             self,
             table_id: int,
-            table_type: DataSource,
+            table_type: SourceTableType,
             last_update: Date,
             **kwargs):
         """Initialize Source Table."""
@@ -152,15 +173,15 @@ class SourceTable(ModelBase):
         self._table_id = new_id
 
     @property
-    def table_type(self) -> DataSource:
+    def table_type(self) -> SourceTableType:
         """Get Table Type."""
         return self._table_type
 
     @table_type.setter
-    def table_type(self, new_type: DataSource):
+    def table_type(self, new_type: SourceTableType):
         """Set Table Type."""
-        if not isinstance(new_type, DataSource):
-            raise ValueError("Table type must be a instance of DataSource.")
+        if not isinstance(new_type, SourceTableType):
+            raise ValueError("Table type must be a instance of SourceTableType.")
         self._table_type = new_type
 
     @property
