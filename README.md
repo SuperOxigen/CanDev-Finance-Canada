@@ -35,7 +35,7 @@ attributes.
 ### Config File
 
 There is a sample config file provided in the project as
-[.config.json](.config.json).  The files provide an ability to add
+[config.json](config.json).  The files provide an ability to add
 new tables and indicate the source of the data.
 
 ### How to Run
