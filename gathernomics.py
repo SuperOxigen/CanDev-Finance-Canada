@@ -14,7 +14,7 @@ import time
 import urllib.request
 import zipfile
 
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 
 logger = logging.getLogger(name=__file__)
 
@@ -24,10 +24,23 @@ DEFAULT_COMP_DIR = path.join(DEFAULT_TEMP_DIR, "zips")
 DEFAULT_CONFIG_PATH = path.join(os.getcwd(), "config.json")
 DEFAULT_TABLE_TRACK_PATH = path.join(DEFAULT_TEMP_DIR, "table_tracker.json")
 
+
+class DataSource(Enum):
+    UNKNOWN = 0
+    STATSCAN = 1
+
+    @classmethod
+    def FromString(cls, source: str, default=None):
+        return {
+            "unknown": cls.UNKNOWN,
+            "statscan": cls.STATSCAN
+        }.get(source.lower(), cls.UNKNOWN
+              if default is None else default)
+
+
 #
 # ---- ---- ---- Utilities ---- ---- ----
 #
-
 
 def die(message, *args, **kwargs):
     logger.fatal(message, *args, **kwargs)
@@ -68,17 +81,12 @@ def name_to_filename(name: str) -> str:
 def init_logging(options: argparse.Namespace):
     """Initialize Program Logger."""
     logging_config = {
-        # "level": logging.DEBUG if options.debug else logging.INFO,
-        "level": logging.DEBUG,
+        "level": logging.DEBUG if options.debug else logging.INFO,
         "format": "%(asctime)s %(name)-15s [%(levelname)-5s] %(message)s",
         "datefmt": "%Y-%m-%d %H:%M:%S"
     }
     logging.basicConfig(**logging_config)
 
-
-class DataSource(Enum):
-    UNKNOWN = 0
-    STATSCAN = 1
 
 #
 # ---- ---- ---- Configuration File ---- ---- ----
@@ -138,12 +146,10 @@ class GathernomicsConfig(object):
             if not isinstance(source, str):
                 table.source = DataSource.STATSCAN
             else:
-                if source == "statscan":
-                    table.source = DataSource.STATSCAN
-                else:
+                table.source = DataSource.FromString(
+                    source, DataSource.STATSCAN)
+                if table.source is DataSource.UNKNOWN:
                     logger.debug("Unknown data source: %s", source)
-                    table.source = DataSource.UNKNOWN
-
             logger.debug("> Loaded table %s", name)
             tables.append(table)
         return tables
@@ -152,7 +158,6 @@ class GathernomicsConfig(object):
 #
 # ---- ---- ---- Table Manager ---- ---- ----
 #
-
 
 class TableDescriptor(object):
     """Table Descriptor.
@@ -319,9 +324,29 @@ class StatsCanTableDownloader(object):
         return ctx
 
 
+def parse_args(args: List[str]) -> argparse.Namespace:
+    """Parse Given Arguments."""
+    parser = argparse.ArgumentParser(epilog=("Copyright (c) 2018 Alex Dale"
+                                             " - See LICENCE"))
+    parser.add_argument(
+        "--debug",
+        help="Run in debug mode.",
+        action="store_true")
+
+    parser.add_argument(
+        "--config",
+        help="Location of configuration file",
+        type=str,
+        default=None,
+        dest="config_path")
+
+    return parser.parse_args(args=args)
+
+
 def main(*argv):
-    init_logging(None)
-    config = GathernomicsConfig()
+    options = parse_args(argv)
+    init_logging(options)
+    config = GathernomicsConfig(options.config_path)
     downloader = StatsCanTableDownloader()
     tables = config.GetTables()
     for table in tables:
