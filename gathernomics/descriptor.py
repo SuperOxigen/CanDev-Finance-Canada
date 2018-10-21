@@ -7,8 +7,8 @@ See LICENSE for information
 from enum import Enum
 import logging
 
-from gathernomics.models.sourcetbl import SourceTableType
-from gathernomics.models.factor import TemporalFrequency
+from gathernomics.defaults import DEFAULT_TABLE_ENABLED
+from gathernomics.models import SourceTableType, TemporalFrequency
 
 logger = logging.getLogger(name=__name__)
 
@@ -25,6 +25,7 @@ class TableDescriptor(object):
         self.category = category
         self.indicator = indicator
         self.frequency = frequency
+        self.enabled = DEFAULT_TABLE_ENABLED
         self.last_update = None
         self.data_filter = None
         self.meta_filter = None
@@ -92,5 +93,9 @@ class TableDescriptor(object):
                 source, SourceTableType.STATSCAN)
             if table.source is SourceTableType.UNKNOWN:
                 logger.debug("Unknown data source: %s", source)
+        enabled = table_data.get("enabled")
+        if isinstance(enabled, bool):
+            logger.debug("> Setting enabled = %s", str(enabled))
+            table.enabled = enabled
         logger.debug("> Loaded table %s", name)
         return table

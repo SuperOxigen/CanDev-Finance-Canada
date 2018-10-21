@@ -17,3 +17,5 @@ DEFAULT_COMP_DIR = path.join(DEFAULT_TEMP_DIR, "zips")
 DEFAULT_CONFIG_PATH = path.join(os.getcwd(), "config.json")
 
 DEFAULT_DATEBASE_NAME = "CanDevFinaceCanada"
+
+DEFAULT_TABLE_ENABLED = False
