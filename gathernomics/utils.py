@@ -51,3 +51,16 @@ def name_to_filename(name: str) -> str:
     """Name to Filename."""
     alnum_name = "".join([c for c in name.strip() if c.isalnum() or c == " "])
     return alnum_name.replace(" ", "_")
+
+
+def scalar_multiplier(scalar: str):
+    return {
+        "thousands": 1000,
+        "thousand": 1000,
+        "millions": 1000000,
+        "million": 1000000,
+        "billions": 1000000000,
+        "billion": 1000000000,
+        "trillions": 1000000000000,
+        "trillion": 1000000000000
+    }.get(scalar.lower(), 1)
