@@ -91,8 +91,15 @@ class ModelBase(object):
     def IsInDatabase(self) -> bool:
         return self._in_db
 
-    def Commit(self):
-        result = self.doCommit()
+    def Upsert(self):
+        result = self.doUpsert()
         if result:
             self._in_db = True
         return result
+
+    def Delete(self):
+        if not self.IsInDatabase():
+            # Not in DB, no need to remove
+            return
+        self.doDelete()
+        self._in_db = False
