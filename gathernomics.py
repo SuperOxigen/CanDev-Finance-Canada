@@ -152,6 +152,7 @@ class GathernomicsConfig(object):
             return []
         tables = []
         for idx, table_data in enumerate(tables_data):
+            # Required fields.
             name = table_data.get("name")
             if not isinstance(name, str):
                 logger.warning("Table #%d does not have a name", idx)
@@ -159,7 +160,21 @@ class GathernomicsConfig(object):
             url = table_data.get("url")
             if not isinstance(url, str):
                 logger.warning("Table #%d does not have a url", idx)
-            table = TableDescriptor(name=name, url=url)
+                continue
+            category = tables_data.get("category")
+            if not isinstance(category, str):
+                logger.warning("Table #%d does not have a category", idx)
+                continue
+            indicator = tables_data.get("indicator")
+            if not isinstance(indicator, str):
+                logger.warning("Table #%d does not have an indicator", idx)
+                continue
+            table = TableDescriptor(
+                name=name,
+                url=url,
+                category=category,
+                indicator=indicator)
+            # Optional fields.
             data_filter = table_data.get("data_filter")
             if isinstance(data_filter, str):
                 table.data_filter = data_filter
@@ -195,6 +210,8 @@ class TableDescriptor(object):
         self.data_filter = None
         self.meta_filter = None
         self.source = None
+        self.category = None
+        self.indicator = None
 
     @property
     def name(self) -> str:

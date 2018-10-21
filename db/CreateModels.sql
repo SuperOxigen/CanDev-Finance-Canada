@@ -61,6 +61,7 @@ CREATE TABLE FinacialFactor(
     FiscalValue     BIGINT              NOT NULL,
     ReportingFreq   TemporalFrequency   NOT NULL,
     Indicator       VARCHAR(255)        NOT NULL,
+    MainCategory    VARCHAR(255)        NOT NULL,
     Date            DATE                NOT NULL,
 
     TableID         INTEGER
