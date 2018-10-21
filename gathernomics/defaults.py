@@ -15,3 +15,5 @@ DEFAULT_COMP_DIR = path.join(DEFAULT_TEMP_DIR, "zips")
 # Standard location for configuration data should be in the user's current
 # working directory.
 DEFAULT_CONFIG_PATH = path.join(os.getcwd(), "config.json")
+
+DEFAULT_DATEBASE_NAME = "CanDevFinaceCanada"
